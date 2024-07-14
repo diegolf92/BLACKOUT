@@ -13,11 +13,15 @@ public class EnemySc : MonoBehaviour
 
     private Rigidbody2D rb;
 
+    public AudioSource source;
+
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         player = GameObject.FindGameObjectWithTag("Player");
     }
+
+    bool isScreaming = false;
 
     void Update()
     {
@@ -42,11 +46,26 @@ public class EnemySc : MonoBehaviour
                 // Slow down when too close to the player
                 rb.velocity = direction.normalized * (moveSpeed * distance / minDistance);
             }
-        } else if(flashed)
+            isScreaming = false;
+        } 
+        else if(flashed)
         {
+            if(!isScreaming)
+            {
+                isScreaming = true;
+                source.PlayOneShot(player.GetComponent<PlayerController>().audioClipArray[5]);
+            }
             anim.SetBool("isFlashed", true);
-            Vector2 direction = transform.position -  player.transform.position;
+            Vector2 direction = transform.position - player.transform.position;
             transform.position = Vector3.Lerp(transform.position, direction, moveSpeed/4 * Time.deltaTime);
+        }
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if(other.gameObject.CompareTag("Player"))
+        {
+            other.GetComponent<PlayerController>().Damage();
         }
     }
 }

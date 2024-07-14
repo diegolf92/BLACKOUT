@@ -30,10 +30,15 @@ public class PlayerController : MonoBehaviour
     public GameObject restartButton;
     public GameObject jumpScare;
     public GameObject bloodParticle;
+    //public AudioManager audioManager;
+    AudioSource audioSource;
+    public AudioClip[] audioClipArray;
+    public bool isOnLava = false;
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -43,10 +48,12 @@ public class PlayerController : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.Z))
         {
             lampOn = !lampOn;
+            audioSource.PlayOneShot(audioClipArray[2]);
         }
 
         if (Input.GetKeyDown(KeyCode.X) && !lampOn && horizontalInput == 0)
         {
+            audioSource.PlayOneShot(audioClipArray[3]);
             anim.SetBool("isRecharging", true);
             noEnergy = false;
             stamina += 100f;
@@ -60,7 +67,7 @@ public class PlayerController : MonoBehaviour
             anim.SetBool("isRecharging", false);
         }
         
-        if(lampOn && !noEnergy)
+        if(lampOn && !noEnergy || isOnLava)
         {
             stamina -= lampSpeed;
             slide.value = stamina;
@@ -92,11 +99,13 @@ public class PlayerController : MonoBehaviour
         if (Input.GetButtonDown("Jump") && jumps > 0f)
         {
             Jump();
+            audioSource.PlayOneShot(audioClipArray[1]);
         }
 
         // Handle player input for crouching
         if (Input.GetKeyDown(KeyCode.C) && isGrounded)
         {
+            audioSource.PlayOneShot(audioClipArray[3]);
             Crouch();
         }
         else if (Input.GetKeyUp(KeyCode.C))
@@ -126,14 +135,27 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private bool isWalkingSoundActive = false;
+
     void MovePlayer(Vector2 moveDirection)
     {
         if(isGrounded && horizontalInput != 0)
         {
             anim.SetBool("walk", true);
+            
+            if(!isWalkingSoundActive)
+            {
+                isWalkingSoundActive  = true;
+                audioSource.PlayOneShot(audioClipArray[0]);
+            }
         } else 
         {
             anim.SetBool("walk", false);
+            if(isWalkingSoundActive)
+            {
+                isWalkingSoundActive  = false;
+                audioSource.Stop();
+            }
         }
 
         if (horizontalInput > 0f && !facingRight) 
@@ -235,22 +257,33 @@ public class PlayerController : MonoBehaviour
         transform.localScale = theScale;
     }
 
-    void OnTriggerEnter2D(Collider2D other)
+    void OnCollisionEnter2D(Collision2D col)
     {
-        if(other.transform.tag == "Enemy")
+        if(col.gameObject.CompareTag("Enemy"))
         {
             stamina -= 50f;
             slide.value = stamina;
             anim.SetTrigger("Damage");
             Instantiate(bloodParticle, transform.position, Quaternion.identity);
         }
+    }
 
-        if(other.transform.tag == "Boss")
-        {
-            anim.SetTrigger("Damage");
-            restartButton.SetActive(true);
-            jumpScare.SetActive(true);
-            Instantiate(bloodParticle, transform.position, Quaternion.identity);
-        }
+    public void Damage()
+    {
+        anim.SetTrigger("Damage");
+        restartButton.SetActive(true);
+        jumpScare.SetActive(true);
+        Instantiate(bloodParticle, transform.position, Quaternion.identity);
+    }
+
+    public void DamageEnemy()
+    {
+        audioSource.PlayOneShot(audioClipArray[4]);
+    }
+
+    public void LavaFloor()
+    {
+        audioSource.PlayOneShot(audioClipArray[6]);
+        Instantiate(bloodParticle, transform.position, Quaternion.identity);
     }
 }
