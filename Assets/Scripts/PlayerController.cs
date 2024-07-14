@@ -27,6 +27,9 @@ public class PlayerController : MonoBehaviour
     public float stamina = 1000f;
     public float lampSpeed = 0.1f; 
     bool noEnergy;
+    public GameObject restartButton;
+    public GameObject jumpScare;
+    public GameObject bloodParticle;
 
     void Start()
     {
@@ -42,8 +45,9 @@ public class PlayerController : MonoBehaviour
             lampOn = !lampOn;
         }
 
-        if (Input.GetKeyDown(KeyCode.C) && !lampOn && horizontalInput == 0)
+        if (Input.GetKeyDown(KeyCode.X) && !lampOn && horizontalInput == 0)
         {
+            anim.SetBool("isRecharging", true);
             noEnergy = false;
             stamina += 100f;
             slide.value = stamina;
@@ -51,6 +55,9 @@ public class PlayerController : MonoBehaviour
             {
                 stamina = 1000f;
             }
+        } else if (Input.GetKeyUp(KeyCode.X))
+        {
+            anim.SetBool("isRecharging", false);
         }
         
         if(lampOn && !noEnergy)
@@ -88,11 +95,11 @@ public class PlayerController : MonoBehaviour
         }
 
         // Handle player input for crouching
-        if (Input.GetKeyDown(KeyCode.X) && isGrounded)
+        if (Input.GetKeyDown(KeyCode.C) && isGrounded)
         {
             Crouch();
         }
-        else if (Input.GetKeyUp(KeyCode.X))
+        else if (Input.GetKeyUp(KeyCode.C))
         {
             Uncrouch();
         }
@@ -226,5 +233,24 @@ public class PlayerController : MonoBehaviour
         Vector3 theScale = transform.localScale;
         theScale.x *= -1;
         transform.localScale = theScale;
+    }
+
+    void OnTriggerEnter2D(Collider2D other)
+    {
+        if(other.transform.tag == "Enemy")
+        {
+            stamina -= 50f;
+            slide.value = stamina;
+            anim.SetTrigger("Damage");
+            Instantiate(bloodParticle, transform.position, Quaternion.identity);
+        }
+
+        if(other.transform.tag == "Boss")
+        {
+            anim.SetTrigger("Damage");
+            restartButton.SetActive(true);
+            jumpScare.SetActive(true);
+            Instantiate(bloodParticle, transform.position, Quaternion.identity);
+        }
     }
 }

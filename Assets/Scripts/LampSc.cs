@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class LampSc : MonoBehaviour
 {
+    public GameObject bloodParticle; 
+    
     void OnTriggerEnter2D(Collider2D other)
     {
         if(other.transform.tag == "Boss")
@@ -14,6 +16,7 @@ public class LampSc : MonoBehaviour
         if(other.transform.tag == "Enemy")
         {
             Destroy(other.gameObject);
+            Instantiate(bloodParticle, other.transform.position, Quaternion.identity);
         }
     }
 
